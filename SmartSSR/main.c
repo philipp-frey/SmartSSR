@@ -26,18 +26,20 @@ uint8_t resetReason = MCUSR;
 	
 	cli();				// Disable interrupts so registers can be changed without interruption
 
-	init_clk();			// Initializes CLK to 4MHz
+//	init_clk();			// Initializes CLK to 4MHz
 	init_gpio();		// Initializes I/Os
-	init_adc();
+	PORTA |= (1 << PORTA2);		// Toggle LED
+	init_adc();			// Initializes ADC (Temp sens)
 	init_timer0();		// Initializes timer0
 	init_wdt();			// Initializes watchdog to 1s
 	init_extInterrupt();// Initializes external interrupts on I/O
-
+	PORTA &= ~(1 << PORTA2);	// Toggle LED
 	sei();				// Enable all interrupts
 	
     while (1) 
     {
-	//	wdt_reset();
+		wdt_reset();
+		
 		
     }
 	
@@ -59,8 +61,8 @@ void init_clk(void){
 /************************************************************************/
 void init_gpio(void){
 	// PortA setup
-	DDRA = (1 << DDA7) | (1<< DDA1);				//PA7 is output 1
-	PORTA = (1 << PORTA1);							// PA1 with pull-up, all other off
+	DDRA = (1 << DDA7) | (1<< DDA0) | (1 << DDA2);				//PA7 is output 1
+	PORTA = (1 << PORTA1);							// PA1 input with pull-up, all other off
 	
 	// PortB setup
 	DDRB = (1 << DDB0) | (1 << DDB1) | (1 << DDB2);	// PB0:2 are outputs 2:4
@@ -72,8 +74,8 @@ void init_gpio(void){
 /************************************************************************/
 void init_extInterrupt(void){
 	// Interrupt setup
-	GIMSK = (1<<PCIE0);								// Pin Change Interrupt Enable 0 (PCINT0:7)
-	PCMSK0 = (1 << PCINT1);							// Pin Change Mask Register 0 (PCINT1)
+	GIMSK |= (1<<PCIE0);								// Pin Change Interrupt Enable 0 (PCINT0:7)
+	PCMSK0 |= (1 << PCINT1);							// Pin Change Mask Register 0 (PCINT1)
 }
 
 
@@ -133,7 +135,7 @@ void init_spi(void){
 void init_wdt (void){
 	wdt_disable();
 	wdt_enable(WDTO_1S);
-	WDTCSR |= (1 << WDIE);				// Watchdog enable interrupt
+	//WDTCSR |= (1 << WDIE);				// Watchdog enable interrupt
 }
 
 /************************************************************************/
@@ -141,7 +143,7 @@ void init_wdt (void){
 /************************************************************************/
 ISR(PCINT1_vect){
 	TCNT0 = 0;									// Reset counter
-
+	//PORTA ^= (1 << PORTA0);	// Toggle LED
 }
 
 /************************************************************************/
@@ -172,7 +174,7 @@ ISR(TIM0_OVF_vect){
 /* Watchdog interrupt                                                   */
 /************************************************************************/
 ISR(WATCHDOG_vect){
-	PORTA ^= (1 << PORTA1);	// Toggle LED
+
 	
 }
 
